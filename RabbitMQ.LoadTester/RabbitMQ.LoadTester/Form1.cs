@@ -1,4 +1,5 @@
-﻿using RabbitMQ.Client.Events;
+﻿using Foundations.Extensions.LocalMachineCommands.Broker;
+using RabbitMQ.Client.Events;
 using RabbitMQ.LoadTester.BLL.Morphis;
 using RabbitMQ.LoadTester.BLL.Novus;
 using System;
@@ -14,6 +15,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
 namespace RabbitMQ.LoadTester
 {
@@ -28,6 +30,7 @@ namespace RabbitMQ.LoadTester
 
         ServiceBusManager _serviceBusManager;
 
+        string _DataSetName = "LOADTESTC";
 
 
         private void button1_Click(object sender, EventArgs e)
@@ -158,14 +161,16 @@ namespace RabbitMQ.LoadTester
                 //}
             };
 
-            _serviceBusManager = new ServiceBusManager("LOADTEST", "guest", "guest", serviceBusHost, amqpPort, queueNotification);
+            _serviceBusManager = new ServiceBusManager(_DataSetName, "guest", "guest", serviceBusHost, amqpPort, queueNotification);
 
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
+            // Send a message
 
-            var bob = new NovusMsgBrokerEC("guest");
+
+            var bob = new NovusMsgBrokerEC("guest", _DataSetName);
 
             bob.SendMessage("guest: sta" + DateTime.Now);
 
@@ -182,10 +187,31 @@ namespace RabbitMQ.LoadTester
 
         private void button3_Click(object sender, EventArgs e)
         {
+            // Multi Try
 
-            var bob = new NovusMsgBrokerEC("guest1");
+            for (int i = 0; i < 10; i++)
+            {
+                string username = $"guest{i}";
 
-            bob.SendMessage("guest1: sta" + DateTime.Now);
+                var brokerLoop = new NovusMsgBrokerEC(username, _DataSetName);
+
+                var userLoop  = new NovusMsgBrokerSetupClientUserCmd(brokerLoop, username, username);
+                userLoop.Execute();
+
+
+                brokerLoop.SendMessage($"{username}: STA - {DateTime.Now}");
+
+            }
+
+            //var bobmain = new NovusMsgBrokerEC("guest1");
+
+            //var newuser = new NovusMsgBrokerSetupClientUserCmd(bobmain, "guest1", "guest1");
+            //newuser.Execute();
+
+
+            //var bob = new NovusMsgBrokerEC("guest1");
+
+            //bob.SendMessage("guest1: sta" + DateTime.Now);
 
 
 

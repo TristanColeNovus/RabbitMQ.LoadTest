@@ -15,7 +15,7 @@ namespace RabbitMQ.LoadTester.BLL.Morphis
         private readonly DataSetConfiguration dataset;
         private readonly string _username;
 
-        public NovusMsgBrokerEC(string username)
+        public NovusMsgBrokerEC(string username, string dataSetName)
         {
             //            IOptions<NovusConfigurationSettings> novusConfigurationSettings, 
             //            ICurrentUsernameResolver currentUserNameResolver,
@@ -30,7 +30,7 @@ namespace RabbitMQ.LoadTester.BLL.Morphis
             //    // get the current user context's dataset
             //    dataset = NovusCurrentUserProvider.GetDataSetConfiguration();
             _username = username;
-            dataset = new DataSetConfiguration() { Name = "LOADTEST" };
+            dataset = new DataSetConfiguration() { Name = dataSetName };
             novusConfigurationSettings_ServiceBusSettings = new NovusServiceBusConfigSettings();
 
             Initialize();
@@ -131,7 +131,7 @@ namespace RabbitMQ.LoadTester.BLL.Morphis
 
         private IMsgBrokerPublisher CreatePublisher()
         {
-            return new NovusMsgBrokerPublisher(_username);// novusConfigurationSettings, currentUserNameResolver);
+            return new NovusMsgBrokerPublisher(_username, dataset.Name);// novusConfigurationSettings, currentUserNameResolver);
         }
 
 

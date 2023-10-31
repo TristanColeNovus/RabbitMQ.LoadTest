@@ -16,14 +16,14 @@ namespace RabbitMQ.LoadTester.BLL.Morphis
 
         private readonly string _userName;
 
-        public NovusMsgBrokerPublisher(string userName) //NovusConfigurationSettings config, ICurrentUsernameResolver currentUserNameResolver)
+        public NovusMsgBrokerPublisher(string userName, string dataSetName) //NovusConfigurationSettings config, ICurrentUsernameResolver currentUserNameResolver)
         {
             //this.config = config;
             //this.currentUserNameResolver = currentUserNameResolver;
 
             //if (!GetCurrentDataset()) return;
             _userName = userName;
-            dataset = new DataSetConfiguration() { Name = "LOADTEST" };
+            dataset = new DataSetConfiguration() { Name = dataSetName };
             novusConfigurationSettings_ServiceBusSettings = new NovusServiceBusConfigSettings();
         }
 
