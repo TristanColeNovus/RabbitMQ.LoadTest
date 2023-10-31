@@ -29,6 +29,7 @@ namespace RabbitMQ.LoadTester
 
 
         ServiceBusManager _serviceBusManager;
+        ServiceBusManager[] _serviceBusManagerList;
 
         string _DataSetName = "LOADTESTC";
 
@@ -163,6 +164,7 @@ namespace RabbitMQ.LoadTester
 
             _serviceBusManager = new ServiceBusManager(_DataSetName, "guest", "guest", serviceBusHost, amqpPort, queueNotification);
 
+            ((Button)sender).Enabled = false;
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -172,7 +174,7 @@ namespace RabbitMQ.LoadTester
 
             var bob = new NovusMsgBrokerEC("guest", _DataSetName);
 
-            bob.SendMessage("guest: sta" + DateTime.Now);
+            bob.SendMessage("guest: sta" + DateTime.Now.ToString("MM/dd HH:mm:ss.ffff"));
 
         }
 
@@ -188,20 +190,22 @@ namespace RabbitMQ.LoadTester
         private void button3_Click(object sender, EventArgs e)
         {
             // Multi Try
+            Logaction($"Morphis Loop Start - {DateTime.Now.ToString("MM/dd HH:mm:ss.ffff")}");
 
             for (int i = 0; i < 10; i++)
             {
+                BackgroundWorker bw = new BackgroundWorker();
+                bw.DoWork += Bw_DoWork;
+                bw.RunWorkerCompleted += Bw_RunWorkerCompleted;
+
                 string username = $"guest{i}";
 
-                var brokerLoop = new NovusMsgBrokerEC(username, _DataSetName);
+                bw.RunWorkerAsync(username);
 
-                var userLoop  = new NovusMsgBrokerSetupClientUserCmd(brokerLoop, username, username);
-                userLoop.Execute();
-
-
-                brokerLoop.SendMessage($"{username}: STA - {DateTime.Now}");
-
+                System.Threading.Thread.Sleep(100);
             }
+
+            Logaction($"Morphis Loop End - {DateTime.Now.ToString("MM/dd HH:mm:ss.ffff")}");
 
             //var bobmain = new NovusMsgBrokerEC("guest1");
 
@@ -215,6 +219,62 @@ namespace RabbitMQ.LoadTester
 
 
 
+        }
+
+        private void Bw_DoWork(object sender, DoWorkEventArgs e)
+        {
+            string username = (string)e.Argument;
+
+            var brokerLoop = new NovusMsgBrokerEC(username, _DataSetName);
+
+            var userLoop = new NovusMsgBrokerSetupClientUserCmd(brokerLoop, username, username);
+            userLoop.Execute();
+
+            string msg = $"{username}: STA - {DateTime.Now.ToString("MM/dd HH:mm:ss.ffff")}";
+
+            brokerLoop.SendMessage(msg);
+
+
+            e.Result = $"Sent: {msg}";
+        }
+
+        private void Bw_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            Logaction(e.Result.ToString());
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+
+            string serviceBusHost = Properties.Settings.Default.ServiceBusHost;
+
+            ushort amqpPort;
+            ushort.TryParse(Properties.Settings.Default.ServiceBusAMQPPort, out amqpPort);
+
+
+
+            Action<BasicDeliverEventArgs> queueNotification = ea =>
+            {
+                var body = ea.Body.ToArray();
+                var message = (object)Encoding.UTF8.GetString(body);
+                var contentType = ea.BasicProperties.ContentType;
+                var objectType = ea.BasicProperties.Type;
+                // Dim result = body.DeSerialize(Type.GetType(objectType))
+
+                Logaction($"ServiceBus.Received({objectType}): {message}");
+            };
+
+            _serviceBusManagerList = new ServiceBusManager[10];
+
+            for (int i = 0; i < 10; i++)
+            {
+
+                _serviceBusManagerList[i] = new ServiceBusManager(_DataSetName, $"guest{i}", $"guest{i}", serviceBusHost, amqpPort, queueNotification);
+                System.Threading.Thread.Sleep(100);
+            }
+
+
+        ((Button)sender).Enabled = false;
         }
     }
 }

@@ -11,8 +11,8 @@ namespace RabbitMQ.LoadTester.BLL.Shared
     {
         private readonly string QueueName;
         private ConnectionFactory Factory;
-        private static IConnection Connection;
-        private static IModel Channel;
+        private IConnection Connection;
+        private IModel Channel;
         private Action<BasicDeliverEventArgs> SubscriptionDelegate;
 
         public Subscribe(string exchangeName, string queueName, string hostName, string vhost, string userName, string password, ushort port, Action<BasicDeliverEventArgs> subscriptionDelegate)

@@ -18,7 +18,7 @@ namespace RabbitMQ.LoadTester.BLL.Novus
     {
         private string ExchangeName;
         private string QueueName;
-        //private string NovusClientAccountName;
+        private string NovusClientAccountName;
         //private string SubscriberQueuePassword;
         private Subscribe Subscriber;
 
@@ -40,7 +40,7 @@ namespace RabbitMQ.LoadTester.BLL.Novus
             QueueName = $"{dataset}.rmq.queue.morphis.{novusUsername}".ToLower();
 
             // setting up the NOVUS client user account name to be used by the RabbitMQ Service Bus
-            //NovusClientAccountName = $"{dataset}.rmq.morphis.{novusUsername}".ToLower();
+            NovusClientAccountName = $"{dataset}.rmq.morphis.{novusUsername}".ToLower();
 
             // the password used to access the queue
             //SubscriberQueuePassword = queuePassword;
@@ -53,7 +53,7 @@ namespace RabbitMQ.LoadTester.BLL.Novus
             //    return;
 
             // setup NOVUS client as a service bus subscriber
-            Subscriber = new Subscribe(ExchangeName, QueueName, serviceBusHost, dataset.ToLower(), novusUsername, queuePassword, ampqPort, queueEvent);
+            Subscriber = new Subscribe(ExchangeName, QueueName, serviceBusHost, dataset.ToLower(), NovusClientAccountName, queuePassword, ampqPort, queueEvent);
         }
         
         
