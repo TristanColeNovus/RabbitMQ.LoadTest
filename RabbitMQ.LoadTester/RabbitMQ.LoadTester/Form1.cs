@@ -1,5 +1,6 @@
 ﻿using Foundations.Extensions.LocalMachineCommands.Broker;
 using RabbitMQ.Client.Events;
+using RabbitMQ.LoadTester.BLL;
 using RabbitMQ.LoadTester.BLL.Morphis;
 using RabbitMQ.LoadTester.BLL.Novus;
 using System;
@@ -36,6 +37,8 @@ namespace RabbitMQ.LoadTester
 
         private void button1_Click(object sender, EventArgs e)
         {
+            System.Diagnostics.Trace.TraceInformation(TimeHelp.GetTimeText() + "button1_Click() Start");
+
 
             string serviceBusHost = Properties.Settings.Default.ServiceBusHost;
 
@@ -52,7 +55,7 @@ namespace RabbitMQ.LoadTester
                 var objectType = ea.BasicProperties.Type;
                 // Dim result = body.DeSerialize(Type.GetType(objectType))
 
-                Logaction($"ServiceBus.Received({objectType}): {message}");
+                Logaction($"ServiceBus.Received({objectType}): {message} " + TimeHelp.GetTimeText());
 
                 //switch (objectType)
                 //{
@@ -164,19 +167,38 @@ namespace RabbitMQ.LoadTester
 
             _serviceBusManager = new ServiceBusManager(_DataSetName, "guest", "guest", serviceBusHost, amqpPort, queueNotification);
 
+            System.Diagnostics.Trace.TraceInformation(TimeHelp.GetTimeText() + "button1_Click() End");
             ((Button)sender).Enabled = false;
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
+            System.Diagnostics.Trace.TraceInformation(TimeHelp.GetTimeText() + "button2_Click() Start");
+
             // Send a message
-
-
             var bob = new NovusMsgBrokerEC("guest", _DataSetName);
+            var userLoop = new NovusMsgBrokerSetupClientUserCmd(bob, "guest", "guest");
+            userLoop.Execute();
 
-            bob.SendMessage("guest: sta" + DateTime.Now.ToString("MM/dd HH:mm:ss.ffff"));
+            bob.SendMessage("guest: sta" + TimeHelp.GetTimeText());
 
+            System.Diagnostics.Trace.TraceInformation(TimeHelp.GetTimeText() + "button2_Click() End");
         }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            if (timSingleMorphis.Enabled)
+            {
+                timSingleMorphis.Enabled = false;
+                ((Button)sender).Text = "Morphis Timer";
+            }
+            else
+            {
+                timSingleMorphis.Enabled = true;
+                ((Button)sender).Text = "Stop";
+            }
+        }
+
 
         private void Logaction(string message)
         {
@@ -190,10 +212,11 @@ namespace RabbitMQ.LoadTester
         private void button3_Click(object sender, EventArgs e)
         {
             // Multi Try
-            Logaction($"Morphis Loop Start - {DateTime.Now.ToString("MM/dd HH:mm:ss.ffff")}");
+            Logaction($"Morphis Loop Start - {TimeHelp.GetTimeText()}");
 
             for (int i = 0; i < 10; i++)
             {
+                System.Diagnostics.Trace.TraceInformation(TimeHelp.GetTimeText() + "button3_Click() Start Worker {0}", i);
                 BackgroundWorker bw = new BackgroundWorker();
                 bw.DoWork += Bw_DoWork;
                 bw.RunWorkerCompleted += Bw_RunWorkerCompleted;
@@ -201,11 +224,14 @@ namespace RabbitMQ.LoadTester
                 string username = $"guest{i}";
 
                 bw.RunWorkerAsync(username);
+                Logaction($"Morphis Loop Run {username} - {TimeHelp.GetTimeText()}");
 
-                System.Threading.Thread.Sleep(100);
+                System.Diagnostics.Trace.TraceInformation(TimeHelp.GetTimeText() + "button3_Click() Done Worker {0}", i);
+
+                //  System.Threading.Thread.Sleep(100);
             }
 
-            Logaction($"Morphis Loop End - {DateTime.Now.ToString("MM/dd HH:mm:ss.ffff")}");
+            Logaction($"Morphis Loop End - {TimeHelp.GetTimeText()}");
 
             //var bobmain = new NovusMsgBrokerEC("guest1");
 
@@ -224,13 +250,14 @@ namespace RabbitMQ.LoadTester
         private void Bw_DoWork(object sender, DoWorkEventArgs e)
         {
             string username = (string)e.Argument;
+            System.Diagnostics.Trace.TraceInformation(TimeHelp.GetTimeText() + "button3_Click() Do Worker {0}", username);
 
             var brokerLoop = new NovusMsgBrokerEC(username, _DataSetName);
 
             var userLoop = new NovusMsgBrokerSetupClientUserCmd(brokerLoop, username, username);
             userLoop.Execute();
 
-            string msg = $"{username}: STA - {DateTime.Now.ToString("MM/dd HH:mm:ss.ffff")}";
+            string msg = $"{username}: STA - {TimeHelp.GetTimeText()}";
 
             brokerLoop.SendMessage(msg);
 
@@ -261,7 +288,7 @@ namespace RabbitMQ.LoadTester
                 var objectType = ea.BasicProperties.Type;
                 // Dim result = body.DeSerialize(Type.GetType(objectType))
 
-                Logaction($"ServiceBus.Received({objectType}): {message}");
+                Logaction($"ServiceBus.Received({objectType}): {message} " + TimeHelp.GetTimeText());
             };
 
             _serviceBusManagerList = new ServiceBusManager[10];
@@ -275,6 +302,13 @@ namespace RabbitMQ.LoadTester
 
 
         ((Button)sender).Enabled = false;
+        }
+
+        private void timSingleMorphis_Tick(object sender, EventArgs e)
+        {
+            var bob = new NovusMsgBrokerEC("guest", _DataSetName);
+            bob.SendMessage("guest: TIM" + TimeHelp.GetTimeText());
+
         }
     }
 }

@@ -25,6 +25,9 @@ namespace RabbitMQ.LoadTester.BLL.Shared
 
                 if ((int)result.StatusCode >= 300)
                     throw new Exception(result.ToString());
+
+
+                System.Diagnostics.Trace.TraceInformation(TimeHelp.GetTimeText() + "Setup.VirtualHost({0}) : {1}", cfg.VirtualHost, result.StatusCode);
             }
         }
 
@@ -47,9 +50,10 @@ namespace RabbitMQ.LoadTester.BLL.Shared
 
                 if ((int)result.StatusCode >= 300)
                     throw new Exception(result.ToString());
-            }
 
-            // setup password 
+
+                System.Diagnostics.Trace.TraceInformation(TimeHelp.GetTimeText() + "Setup.UserAccount({0}) : {1}", cfg.Username, result.StatusCode);
+            }
         }
 
         /// <summary>
@@ -69,6 +73,9 @@ namespace RabbitMQ.LoadTester.BLL.Shared
 
                 if ((int)result.StatusCode >= 300)
                     throw new Exception(result.ToString());
+
+
+                System.Diagnostics.Trace.TraceInformation(TimeHelp.GetTimeText() + "Setup.UserAccountVHostPermissions({0}/{1}) : {2}", cfg.VirtualHost, cfg.Username, result.StatusCode);
             }
         }
 
@@ -89,6 +96,9 @@ namespace RabbitMQ.LoadTester.BLL.Shared
 
                 if ((int)result.StatusCode >= 300)
                     throw new Exception(result.ToString());
+
+
+                System.Diagnostics.Trace.TraceInformation(TimeHelp.GetTimeText() + "Setup.Exchange({0}/{1}) : {2}", cfg.VirtualHost, cfg.ExchangeName, (int)result.StatusCode);
             }
         }
 

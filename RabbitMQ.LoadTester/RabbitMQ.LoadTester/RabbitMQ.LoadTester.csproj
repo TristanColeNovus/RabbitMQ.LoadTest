@@ -66,6 +66,7 @@
     <Compile Include="BLL\Shared\Types\FileWrite.cs" />
     <Compile Include="BLL\Shared\Types\Test1.cs" />
     <Compile Include="BLL\Shared\Types\Test2.cs" />
+    <Compile Include="BLL\TimeHelp.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
