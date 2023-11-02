@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -68,8 +69,13 @@ namespace RabbitMQ.LoadTester.BLL.Shared
             {
                 var url = $"http://{cfg.Url}:{cfg.ManagementPort}/api/permissions/{cfg.VirtualHost}/{cfg.Username}";
 
-                var content = new StringContent($"{{\"configure\":\"{configure}\",\"write\":\"{write}\",\"read\":\"{read}\"}}", Encoding.UTF8, "application/json");
+                //configure = ".*";
+                //write = ".*";
+                //read = ".*";
+
+                var content = new StringContent($"{{\"username\":\"{cfg.Username}\",\"vhost\":\"{cfg.VirtualHost}\",\"configure\":\"{configure}\",\"write\":\"{write}\",\"read\":\"{read}\"}}", Encoding.UTF8, "application/json");
                 var result = client.PutAsync(url, content).Result;
+                Debug.WriteLine($"{{\"username\":\"{cfg.Username}\",\"vhost\":\"{cfg.VirtualHost}\",\"configure\":\"{configure}\",\"write\":\"{write}\",\"read\":\"{read}\"}}");
 
                 if ((int)result.StatusCode >= 300)
                     throw new Exception(result.ToString());

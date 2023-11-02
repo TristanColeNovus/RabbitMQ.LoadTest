@@ -51,11 +51,11 @@ namespace RabbitMQ.LoadTester.BLL.Morphis
 
                 Setup.VirtualHost(rabbitMqConfiguration);
                 Setup.Exchange(rabbitMqConfiguration);
-                Setup.UserAccount(rabbitMqConfiguration, "guest", "administrator");
-                Setup.UserAccountVHostPermissions(rabbitMqConfiguration,
-                                                    GetBackendUserPermissionsConfig(),
-                                                    GetBackendUserPermissionsRead(),
-                                                    GetBackendUserPermissionsWrite());
+                //Setup.UserAccount(rabbitMqConfiguration, "guest", "administrator");
+                //Setup.UserAccountVHostPermissions(rabbitMqConfiguration,
+                //                                    GetBackendUserPermissionsConfig(),
+                //                                    GetBackendUserPermissionsRead(),
+                //                                    GetBackendUserPermissionsWrite());
                 //rabbitMqConfiguration.Username = GetFrontendUserQueueName();
                 //Setup.UserAccount(rabbitMqConfiguration, novusConfigurationSettings.ServiceBusSettings.ServiceAccountPassword, rabbitMqConfiguration.VirtualHost);
                 //Setup.UserAccountVHostPermissions(rabbitMqConfiguration,

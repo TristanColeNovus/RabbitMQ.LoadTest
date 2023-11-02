@@ -14,7 +14,7 @@ namespace RabbitMQ.LoadTester.BLL.Morphis
 
         public string ApiPort { get; set; } = "15672";
 
-        public string ServiceAccount { get; set; } = "guest";
+        public string ServiceAccount { get; set; } = "sysman";
 
         public string ServiceAccountPassword { get; set; } = "guest";
 
