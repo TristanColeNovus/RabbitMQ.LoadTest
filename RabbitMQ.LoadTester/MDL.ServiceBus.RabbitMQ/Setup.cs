@@ -32,7 +32,7 @@ namespace MDL.ServiceBus
         /// EnsureExistRabbitMqUserAccount
         /// </summary>
         /// <param name="cfg"></param>
-        public static void UserAccount(RabbitMqConfiguration cfg, string password)
+        public static void UserAccount(RabbitMqConfiguration cfg, string password, string tags)
         {
             var credentials = new NetworkCredential() { UserName = cfg.ServiceAccountUsername, Password = cfg.ServiceAccountPassword };
             using (var handler = new HttpClientHandler { Credentials = credentials })
@@ -42,7 +42,7 @@ namespace MDL.ServiceBus
 
                 var passwordHash = EncodePassword(password);
 
-                var content = new StringContent($"{{\"password_hash\":\"{passwordHash}\", \"description\":\"{cfg.VirtualHost} Dataset\", \"tags\":\"{cfg.VirtualHost}\"}}", Encoding.UTF8, "application/json");
+                var content = new StringContent($"{{\"password_hash\":\"{passwordHash}\", \"description\":\"{cfg.VirtualHost} Dataset\", \"tags\":\"{tags}\"}}", Encoding.UTF8, "application/json");
                 var result = client.PutAsync(url, content).Result;
 
                 if ((int)result.StatusCode >= 300)

@@ -3,7 +3,6 @@ using RabbitMQ.Client.Events;
 using System;
 using System.Text;
 
-
 namespace MDL.ServiceBus
 {
     /// <summary>
@@ -13,11 +12,11 @@ namespace MDL.ServiceBus
     {
         private readonly string QueueName;
         private ConnectionFactory Factory;
-        private static IConnection Connection;
-        private static IModel Channel;
-        private Action<BasicDeliverEventArgs> SubscriptionDelegate;
+        private IConnection Connection;
+        private IModel Channel;
+        private Func<string, string> SubscriptionDelegate;
 
-        public Subscribe(string exchangeName, string queueName, string hostName, string vhost, string userName, string password, ushort port, Action<BasicDeliverEventArgs> subscriptionDelegate)
+        public Subscribe(string exchangeName, string queueName, string hostName, string vhost, string userName, string password, ushort port, Func<string, string> subscriptionDelegate)
         {
             if (string.IsNullOrEmpty(queueName)) throw new Exception("Queue name must be provided");
             if (string.IsNullOrEmpty(hostName)) throw new Exception("Host name must be provided");
@@ -33,7 +32,6 @@ namespace MDL.ServiceBus
                 Connection = Factory.CreateConnection();
                 Channel = Connection.CreateModel();
             }
-            if (Channel == null) Channel = Connection.CreateModel();
             /* 
              * Name         the name of the queue
              * Durable      persisting the queue to disk (performance hit)
@@ -62,12 +60,12 @@ namespace MDL.ServiceBus
         /// <param name="ea"></param>
         public void Receive(object sender, BasicDeliverEventArgs ea)
         {
-            //var body = ea.Body.ToArray();
-            //var message = (object)Encoding.UTF8.GetString(body);
-            //var contentType = ea.BasicProperties.ContentType;
-            //var objectType = ea.BasicProperties.Type;
-            //var result = body.DeSerialize(Type.GetType(objectType));
-            SubscriptionDelegate(ea);
+            var body = ea.Body.ToArray();
+            var message = (object)Encoding.UTF8.GetString(body);
+            var contentType = ea.BasicProperties.ContentType;
+            var objectType = ea.BasicProperties.Type;
+            var result = body.DeSerialize(Type.GetType(objectType));
+            SubscriptionDelegate(message.ToString());
         }
     }
 }
