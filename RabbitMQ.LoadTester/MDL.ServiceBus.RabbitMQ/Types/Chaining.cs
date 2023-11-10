@@ -10,7 +10,11 @@ namespace MDL.ServiceBus.Types
         public string TaskId { get; set; }
         public string ProgramShortcut { get; set; }
         public string ShortcutSynonym { get; set; }
-        public string LogOn { get; set; }   // Oracle DB User Name
+
+        /// <summary>
+        /// Oracle DB User Name
+        /// </summary>
+        public string LogOn { get; set; }
         public string PolicyNumber { get; set; }
         public string Year { get; set; }
         public bool IsEndorsementPending { get; set; }
@@ -30,6 +34,6 @@ namespace MDL.ServiceBus.Types
         public bool IsEnquiryMode { get; set; }
         public string Account { get; set; }
         public string Suffix { get; set; }
-        
+
     }
 }
