@@ -73,10 +73,25 @@
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
+    <Compile Include="FormNewPackage.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormNewPackage.Designer.cs">
+      <DependentUpon>FormNewPackage.cs</DependentUpon>
+    </Compile>
+    <Compile Include="NEW\Morphis\DataSetConfiguration.cs" />
+    <Compile Include="NEW\Morphis\Globals.cs" />
+    <Compile Include="NEW\Morphis\NovusMessageWriter.cs" />
+    <Compile Include="NEW\Morphis\NovusMsgBrokerEC.cs" />
+    <Compile Include="NEW\Morphis\NovusMsgBrokerPublisher.cs" />
+    <Compile Include="NEW\Morphis\NovusMsgBrokerSetupClientUserCmd.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormNewPackage.resx">
+      <DependentUpon>FormNewPackage.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -101,11 +116,14 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions">
+      <Version>7.0.1</Version>
+    </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>13.0.1</Version>
     </PackageReference>
     <PackageReference Include="RabbitMQ.Client">
-      <Version>6.2.1</Version>
+      <Version>6.6.0</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
@@ -113,6 +131,14 @@
       <Project>{824cbd93-ff6e-48db-a8fa-1961add70408}</Project>
       <Name>Foundations.Extensions.LocalMachineCommands</Name>
     </ProjectReference>
+    <ProjectReference Include="..\MDL.ServiceBus.RabbitMQ\MDL.ServiceBus.RabbitMQ.csproj">
+      <Project>{bfdcd151-d7a3-4ae2-9d31-a15d84720794}</Project>
+      <Name>MDL.ServiceBus.RabbitMQ</Name>
+    </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="NEW\Novus\ServiceBusManager.vb" />
+  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

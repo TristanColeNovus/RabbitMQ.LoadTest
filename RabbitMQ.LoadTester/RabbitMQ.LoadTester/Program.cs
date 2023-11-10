@@ -16,7 +16,8 @@ namespace RabbitMQ.LoadTester
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+            Application.Run(new FormNewPackage());
+            //Application.Run(new Form1());
         }
     }
 }
