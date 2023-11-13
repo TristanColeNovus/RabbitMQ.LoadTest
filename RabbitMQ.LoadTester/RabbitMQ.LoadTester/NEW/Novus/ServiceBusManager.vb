@@ -10,7 +10,6 @@ namespace RabbitMQ.LoadTester.NEW.Novus
     public class ServiceBusManager
     {
         private RabbitMQConfiguration RabbitConfig;
-        private string QueueName;
         private string NovusClientAccountName;
         private string SubscriberQueuePassword;
         private Subscribe Subscriber;
@@ -28,21 +27,17 @@ namespace RabbitMQ.LoadTester.NEW.Novus
         /// <param name="queueEvent"></param>
         public ServiceBusManager(string dataset, string novusUsername, string queuePassword, string serviceBusHost, ushort amqpPort, Action<BasicDeliverEventArgs> queueEvent)
         {
-            // setting up the exchange And queue names for the current dataset And NOVUS client user
-            QueueName = PathHelper.GetQueueName(dataset, novusUsername);
-
             // setting up the NOVUS client user account name to be used by the RabbitMQ Service Bus
-            NovusClientAccountName = PathHelper.GetUserName(dataset, novusUsername);
+            //NovusClientAccountName = PathHelper.GetUserName(dataset, novusUsername);
             // the password used to access the queue
             SubscriberQueuePassword = queuePassword;
 
             RabbitConfig = new RabbitMQConfiguration()
             {
                 AMQPPort = amqpPort,
-                ExchangeName = PathHelper.GetExchangeName(dataset),
+                DataSetName = dataset,
                 HostURL = serviceBusHost,
-                Username = NovusClientAccountName,
-                VirtualHost = dataset
+                Username = novusUsername,
             };
 
             // setting up object to contain data to perform the Service Bus setup process
@@ -52,7 +47,7 @@ namespace RabbitMQ.LoadTester.NEW.Novus
             //if (String.IsNullOrEmpty(novusClientCredentials.Password)) return;
 
             // setup NOVUS client as a service bus subscriber
-            Subscriber = new Subscribe(RabbitConfig, QueueName, queuePassword, queueEvent);
+            Subscriber = new Subscribe(RabbitConfig, queuePassword, queueEvent);
         }
 
 

@@ -28,7 +28,7 @@ namespace RabbitMQ.LoadTester.NEW.Morphis
 
             //    // get the current user context's dataset
             //    dataset = NovusCurrentUserProvider.GetDataSetConfiguration();
-            dataset = new DataSetConfiguration() { Name = novusConfigurationSettings.VirtualHost };
+            dataset = new DataSetConfiguration() { Name = novusConfigurationSettings.DataSetName };
             novusConfigurationSettings_ServiceBusSettings = novusConfigurationSettings;
 
             Initialize();
@@ -40,6 +40,11 @@ namespace RabbitMQ.LoadTester.NEW.Morphis
             InitializePublisher(CreatePublisher());
         }
 
+
+
+        /// <summary>
+        /// Setup RabbitMQ Vhost/Exchange/Novus User (inc permissions)
+        /// </summary>
         private void TryToSetup()
         {
             try
@@ -48,14 +53,33 @@ namespace RabbitMQ.LoadTester.NEW.Morphis
 
                 using (var rabbitSetup = new Setup())
                 {
-                    rabbitSetup.VirtualHost(novusConfigurationSettings_ServiceBusSettings);
-                    rabbitSetup.Exchange(novusConfigurationSettings_ServiceBusSettings);
-                    // rabbitSetup.UserAccount(rabbitMQConfiguration, novusConfigurationSettings_ServiceBusSettings.ServiceAccountPassword, "administrator");
-                    // Setup.UserAccountVHostPermissions(rabbitMQConfiguration,
-                    //                                    GetBackendUserPermissionsConfig(),
-                    //                                    GetBackendUserPermissionsRead(),
-                    //                                    GetBackendUserPermissionsWrite());
-                    rabbitSetup.UserAccount(novusConfigurationSettings_ServiceBusSettings, novusConfigurationSettings_ServiceBusSettings.ServiceAccountPassword, novusConfigurationSettings_ServiceBusSettings.VirtualHost);
+                    // Create New VHost
+                    if (!rabbitSetup.HasVirtualHost(novusConfigurationSettings_ServiceBusSettings))
+                    {
+                        rabbitSetup.VirtualHost(novusConfigurationSettings_ServiceBusSettings);
+                        // Add morphis-service permissions to vhost
+                        rabbitSetup.ServiceAccountVHostPermissions(novusConfigurationSettings_ServiceBusSettings);
+                    }
+                    // Create New Exchange
+                    if (!rabbitSetup.HasExchange(novusConfigurationSettings_ServiceBusSettings))
+                    {
+                        rabbitSetup.Exchange(novusConfigurationSettings_ServiceBusSettings);
+                    }
+                    // Create New Queue
+                    if (!rabbitSetup.HasQueue(novusConfigurationSettings_ServiceBusSettings))
+                    {
+                        rabbitSetup.Queue(novusConfigurationSettings_ServiceBusSettings);
+                    }
+                    // Create Novus User & permissions
+                    if (!rabbitSetup.HasUserAccount(novusConfigurationSettings_ServiceBusSettings))
+                    {
+                        rabbitSetup.UserAccount(novusConfigurationSettings_ServiceBusSettings, novusConfigurationSettings_ServiceBusSettings.ServiceAccountPassword, novusConfigurationSettings_ServiceBusSettings.VirtualHost);
+                        rabbitSetup.UserAccountVHostPermissions(novusConfigurationSettings_ServiceBusSettings,
+                                                            PermissionHelper.GetFrontendUserConfig(novusConfigurationSettings_ServiceBusSettings.VirtualHost, novusConfigurationSettings_ServiceBusSettings.Username),
+                                                            PermissionHelper.GetFrontendUserWrite(novusConfigurationSettings_ServiceBusSettings.VirtualHost, novusConfigurationSettings_ServiceBusSettings.Username),
+                                                            PermissionHelper.GetFrontendUserRead(novusConfigurationSettings_ServiceBusSettings.VirtualHost, novusConfigurationSettings_ServiceBusSettings.Username));
+                    }
+                    // Create Queue
 
                 }
             }
@@ -67,61 +91,33 @@ namespace RabbitMQ.LoadTester.NEW.Morphis
         }
 
 
-        private RabbitMQConfiguration GetRabbitMQConfiguration()
-        {
-            return GetRabbitMQConfigurationFor(novusConfigurationSettings_ServiceBusSettings.ServiceAccountUsername);
-        }
 
-        private RabbitMQConfiguration GetRabbitMQConfigurationFor(string username)
-        {
-            var virtualHost = dataset.Name.ToLower();
-            return new RabbitMQConfiguration()
-            {
-                HostURL = novusConfigurationSettings_ServiceBusSettings.HostURL,
-                Username = username,
-                ServiceAccountUsername = novusConfigurationSettings_ServiceBusSettings.ServiceAccountUsername,
-                ServiceAccountPassword = novusConfigurationSettings_ServiceBusSettings.ServiceAccountPassword,
-                ManagementApiPort = novusConfigurationSettings_ServiceBusSettings.ManagementApiPort,
-                VirtualHost = virtualHost,
-                ExchangeName = PathHelper.GetExchangeName(dataset.Name),
-            };
-        }
+        //private RabbitMQConfiguration GetRabbitMQConfiguration()
+        //{
+        //    return GetRabbitMQConfigurationFor(novusConfigurationSettings_ServiceBusSettings.ServiceAccountUsername);
+        //}
+
+        //private RabbitMQConfiguration GetRabbitMQConfigurationFor(string username)
+        //{
+        //    var virtualHost = dataset.Name.ToLower();
+        //    return new RabbitMQConfiguration()
+        //    {
+        //        HostURL = novusConfigurationSettings_ServiceBusSettings.HostURL,
+        //        Username = username,
+        //        ServiceAccountUsername = novusConfigurationSettings_ServiceBusSettings.ServiceAccountUsername,
+        //        ServiceAccountPassword = novusConfigurationSettings_ServiceBusSettings.ServiceAccountPassword,
+        //        ManagementApiPort = novusConfigurationSettings_ServiceBusSettings.ManagementApiPort,
+        //        DataSetName = d
+        //        VirtualHost = virtualHost,
+        //        ExchangeName = PathHelper.GetExchangeName(dataset.Name),
+        //    };
+        //}
 
 
 
         private string GetFrontendUserQueueName()
         {
-            return PathHelper.GetUserName(dataset.Name, novusConfigurationSettings_ServiceBusSettings.Username);
-        }
-
-        private string GetBackendUserPermissionsRead()
-        {
-            return $"^{dataset.Name}\\.rmq\\.queue\\.morphis.*|{dataset.Name}\\.rmq\\.exchange\\.morphis|amq\\.default$".ToLower();
-        }
-
-        private string GetBackendUserPermissionsWrite()
-        {
-            return $"^{dataset.Name}\\.rmq\\.queue\\.morphis.*|{dataset.Name}\\.rmq\\.exchange\\.morphis|amq\\.default$".ToLower();
-        }
-
-        private string GetBackendUserPermissionsConfig()
-        {
-            return $"^{dataset.Name}\\.rmq\\.queue\\.morphis.*|{dataset.Name}\\.rmq\\.exchange\\.morphis$".ToLower();
-        }
-
-        private string GetFrontendUserPermissionsRead()
-        {
-            return $"^({dataset.Name}\\.rmq\\.queue\\.morphis\\.{novusConfigurationSettings_ServiceBusSettings.Username}|{dataset.Name}\\.rmq\\.exchange\\.morphis|amq\\.default)$".ToLower();
-        }
-
-        private string GetFrontendUserPermissionsWrite()
-        {
-            return $"^({dataset.Name}\\.rmq\\.queue\\.morphis\\.{novusConfigurationSettings_ServiceBusSettings.Username}|{dataset.Name}\\.rmq\\.exchange\\.morphis|amq\\.default)$".ToLower();
-        }
-
-        private string GetFrontendUserPermissionsConfig()
-        {
-            return $"^({dataset.Name}\\.rmq\\.queue\\.morphis\\.{novusConfigurationSettings_ServiceBusSettings.Username})$".ToLower();
+            return PathHelper.GetQueueName(dataset.Name, novusConfigurationSettings_ServiceBusSettings.Username);
         }
 
 
@@ -134,22 +130,11 @@ namespace RabbitMQ.LoadTester.NEW.Morphis
         public override void SendMessage<T>(T message)
         {
             NovusMessageWriter writer = NovusMessageWriter.Create<T>(message);
-            System.Diagnostics.Trace.TraceInformation(writer.WriteToString());
+            System.Diagnostics.Trace.TraceInformation(message.ToString());
 
             //loggingPolicy.LogSendMessage(writer);
 
             base.SendMessage(message);
-        }
-
-        public void SetupClientUser(string username, string password)
-        {
-            RabbitMQConfiguration rabbitMQConfiguration = GetRabbitMQConfigurationFor(GetFrontendUserQueueName());
-            //// Setup.UserAccount(rabbitMQConfiguration, password, rabbitMQConfiguration.VirtualHost);
-            //rabbitMqConfiguration.VirtualHost = "%2F"; // backend can now access all users, so must do so using the / virtual host %2F when http encoding escaped
-            Setup.UserAccountVHostPermissions(rabbitMQConfiguration,
-                                                    GetFrontendUserPermissionsConfig(),
-                                                    GetFrontendUserPermissionsRead(),
-                                                    GetFrontendUserPermissionsWrite());
         }
 
         public override void Terminate()

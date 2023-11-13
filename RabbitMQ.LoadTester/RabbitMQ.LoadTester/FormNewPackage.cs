@@ -79,13 +79,11 @@ namespace RabbitMQ.LoadTester
             var RabbitConfig = new RabbitMQConfiguration()
             {
                 AMQPPort = amqpPort,
-                ExchangeName = PathHelper.GetExchangeName(_SINGLEDataSetName),
                 HostURL = serviceBusHost,
                 ServiceAccountPassword = _SINGLEserviceBusAccessCode,
-                Username = PathHelper.GetUserName(_SINGLEDataSetName, _SINGLEnovusUsername),
-                VirtualHost = _SINGLEDataSetName
+                Username =  _SINGLEnovusUsername,
+                DataSetName  = _SINGLEDataSetName
             };
-
 
 
             var bob = new NovusMsgBrokerEC(RabbitConfig);

@@ -84,7 +84,6 @@
     <Compile Include="NEW\Morphis\NovusMessageWriter.cs" />
     <Compile Include="NEW\Morphis\NovusMsgBrokerEC.cs" />
     <Compile Include="NEW\Morphis\NovusMsgBrokerPublisher.cs" />
-    <Compile Include="NEW\Morphis\NovusMsgBrokerSetupClientUserCmd.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Form1.resx">
