@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 
 namespace MDL.ServiceBus
 {
@@ -6,7 +7,7 @@ namespace MDL.ServiceBus
     /// RabbitMQ Configuration
     /// </summary>
     /// <remarks>Used in both Novus and Morphis</remarks>
-    public class RabbitMQConfiguration
+    public class RabbitMQConfiguration : ICloneable
     {
         /// <summary>
         /// Service Account Username
@@ -34,31 +35,86 @@ namespace MDL.ServiceBus
         public int ManagementApiPort { get; set; } = 15672;
 
         /// <summary>
+        /// Dataset Name in lowercase
+        /// </summary>
+        private string _dataSetName;
+
+        /// <summary>
+        /// Novus DataSet Name
+        /// </summary>
+        public string DataSetName
+        {
+            get { return _dataSetName; }
+            set { _dataSetName = value.ToLower(); }
+        }
+
+        /// <summary>
+        /// Username in lowercase
+        /// </summary>
+        private string _username;
+
+        /// <summary>
+        /// Novus Username
+        /// </summary>
+        public string Username
+        {
+            get { return _username; }
+            set { _username = value.ToLower(); }
+        }
+
+        #region "Derived values"
+
+        /// <summary>
         /// Virtual Host (dataset name)
         /// </summary>
         /// <remarks>In lowercase</remarks>
-        public string VirtualHost { get; set; }
+        public string VirtualHost
+        {
+            get { return DataSetName; }
+        }
 
         /// <summary>
         /// Novus Username
         /// </summary>
         /// <remarks>In lowercase</remarks>
-        public string Username { get; set; }
+        public string RabbitMQUsername
+        {
+            get { return PathHelper.GetUserName(DataSetName, Username); }
+        }
 
         /// <summary>
         /// VHost Exchange Name (full path)
         /// </summary>
         /// <remarks>In lowercase</remarks>
-        public string ExchangeName { get; set; }
+        public string ExchangeName
+        {
+            get { return PathHelper.GetExchangeName(DataSetName); }
+        }
+
+        /// <summary>
+        /// VHost Queue Name (full path)
+        /// </summary>
+        /// <remarks>In lowercase</remarks>
+        public string QueueName
+        {
+            get { return PathHelper.GetQueueName(DataSetName, Username); }
+        }
+
+        #endregion
 
         public bool Development { get; set; }
 
         public bool DevMessages { get; set; }
 
+        public object Clone()
+        {
+            return this.MemberwiseClone();
+        }
 
         public override string ToString()
         {
-            return $"{HostURL}:{AMQPPort} / {VirtualHost} / {ExchangeName} ({Username})";
+            return $"{HostURL}:{AMQPPort} / {VirtualHost} ({Username})";
         }
+
     }
 }

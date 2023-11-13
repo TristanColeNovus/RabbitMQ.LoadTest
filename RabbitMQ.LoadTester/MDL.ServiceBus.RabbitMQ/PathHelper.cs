@@ -12,7 +12,7 @@ namespace MDL.ServiceBus
     {
 
         /// <summary>
-        /// Returns the Exchange name
+        /// Returns the full Exchange name
         /// <code>{datasetName}.rmq.exchange.morphis</code>
         /// </summary>
         /// <param name="datasetName">Dataset Name (vhost)</param>
@@ -25,7 +25,7 @@ namespace MDL.ServiceBus
 
 
         /// <summary>
-        /// Returns the Queue name
+        /// Returns the full Queue name
         /// <code>{datasetName}.rmq.queue.morphis.{novusUsername}</code>
         /// </summary>
         /// <param name="datasetName">Dataset Name (vhost)</param>
@@ -39,7 +39,7 @@ namespace MDL.ServiceBus
 
 
         /// <summary>
-        /// Returns the (Novus) User name
+        /// Returns the Rabbit MQ User name from Novus Username
         /// <code>{datasetName}.rmq.morphis.{novusUsername}</code>
         /// </summary>
         /// <param name="datasetName">Dataset Name (vhost)</param>

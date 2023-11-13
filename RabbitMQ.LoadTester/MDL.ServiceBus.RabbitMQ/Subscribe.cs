@@ -21,38 +21,37 @@ namespace MDL.ServiceBus
         /// Connects to a particular vhost of a RabbitMQ instance and will then call the provided subscription delegate when ever a message is pulled off of the queue.
         /// Will create the Connection if not setup
         /// </summary>
-        /// <param name="cfg">Rabbit MQ Config, (HostURL, AMQPPort, VirtualHost, ExchangeName, Username)</param>
-        /// <param name="queueName">Full queue name <seealso cref="PathHelper.GetQueueName(string, string)"/></param>
+        /// <param name="cfg">Rabbit MQ Config, (HostURL, AMQPPort, VirtualHost, ExchangeName, QueueName, Username)</param>
         /// <param name="password">Standard Queue Password</param>
         /// <param name="subscriptionDelegate">Delegate Event</param>
-        public Subscribe(RabbitMQConfiguration cfg, string queueName, string password, Action<BasicDeliverEventArgs> subscriptionDelegate)
+        public Subscribe(RabbitMQConfiguration cfg, string password, Action<BasicDeliverEventArgs> subscriptionDelegate)
         {
             // Check Inputs
             if (cfg == null) throw new Exception("Rabbit MQ Config invalid");
-            if (string.IsNullOrEmpty(queueName)) throw new Exception("Queue name must be provided");
             if (string.IsNullOrEmpty(cfg.HostURL)) throw new Exception("Host name must be provided");
+            if (cfg.AMQPPort <= 0 || cfg.AMQPPort > ushort.MaxValue) throw new Exception("Invalid port number");
             if (string.IsNullOrEmpty(cfg.VirtualHost)) throw new Exception("VirtualHost must be provided");
+            if (string.IsNullOrEmpty(cfg.QueueName)) throw new Exception("Queue name must be provided");
             if (string.IsNullOrEmpty(cfg.Username)) throw new Exception("Username must be provided");
             if (string.IsNullOrEmpty(password)) throw new Exception("Password must be provided");
-            if (cfg.AMQPPort <= 0 || cfg.AMQPPort > ushort.MaxValue) throw new Exception("Invalid port number");
 
             // Create Connection if needed
             if (Connection == null)
             {
-                Factory = new ConnectionFactory { HostName = cfg.HostURL, UserName = cfg.Username, Password = password, Port = cfg.AMQPPort, VirtualHost = cfg.VirtualHost };
+                Factory = new ConnectionFactory { HostName = cfg.HostURL, UserName = cfg.RabbitMQUsername, Password = password, Port = cfg.AMQPPort, VirtualHost = cfg.VirtualHost };
                 Connection = Factory.CreateConnection();
                 Channel = Connection.CreateModel();
             }
             if (Channel == null) Channel = Connection.CreateModel();
 
             // Bind to Queue and Listen
-            Channel.QueueBind(queueName, !string.IsNullOrEmpty(cfg.ExchangeName) ? cfg.ExchangeName : queueName, string.Empty);
+            Channel.QueueBind(cfg.QueueName, !string.IsNullOrEmpty(cfg.ExchangeName) ? cfg.ExchangeName : cfg.QueueName, string.Empty);
 
             SubscriptionDelegate = subscriptionDelegate;
 
             var consumer = new EventingBasicConsumer(Channel);
             consumer.Received += Receive;
-            Channel.BasicConsume(queue: queueName,
+            Channel.BasicConsume(queue: cfg.QueueName,
                                  autoAck: true,
                                  consumer: consumer);
         }

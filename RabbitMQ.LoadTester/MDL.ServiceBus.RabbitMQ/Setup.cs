@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using MDL.ServiceBus.ConfigModels;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Net;
 using System.Net.Http;
@@ -45,7 +46,7 @@ namespace MDL.ServiceBus
             }
         }
 
-
+        #region "Virtual Host"
 
         /// <summary>
         /// Setup RabbitMQ VirtualHost
@@ -53,23 +54,23 @@ namespace MDL.ServiceBus
         /// <param name="cfg">Rabbit MQ Config, (HostURL, ManagementApiPort, VirtualHost, ServiceAccountUsername, ServiceAccountPassword)</param>
         public void VirtualHost(RabbitMQConfiguration cfg)
         {
-            cfg.VirtualHost = cfg.VirtualHost.ToLower();
-
-            // Check if already exists
-            if (HasVirtualHost(cfg)) return;
-
             // Check and Create Connection
             CreateHttpClient(cfg);
 
             // Create Object using Put
             var url = $"api/vhosts/{cfg.VirtualHost}";
-            var content = new StringContent($"{{\"description\":\"{cfg.VirtualHost} Dataset\", \"tags\":\"{cfg.VirtualHost}\"}}", Encoding.UTF8, "application/json");
+            var configModel = new VirtualHostAdd()
+            {
+                Description = $"{cfg.VirtualHost} Dataset",
+                Tags = cfg.VirtualHost
+            };
+            var content = new StringContent(configModel.ToString(), Encoding.UTF8, "application/json");
             var result = _httpClient.PutAsync(url, content).Result;
 
             _logger?.LogTrace("MDL.ServiceBus.RabbitMQ.Setup.VirtualHost({0}) Result:{1}", cfg, result.StatusCode);
 
             if ((int)result.StatusCode >= 300)
-                throw new Exception(result.ToString());
+                throw new Exception($"RabbitMQ.Setup.VirtualHost({cfg}): {result}");
         }
 
 
@@ -79,7 +80,7 @@ namespace MDL.ServiceBus
         /// </summary>
         /// <param name="cfg">Rabbit MQ Config, (HostURL, ManagementApiPort, VirtualHost, ServiceAccountUsername, ServiceAccountPassword)</param>
         /// <returns>True if found, false if not or throws error if failed</returns>
-        private bool HasVirtualHost(RabbitMQConfiguration cfg)
+        public bool HasVirtualHost(RabbitMQConfiguration cfg)
         {
             // Check and Create Connection
             CreateHttpClient(cfg);
@@ -98,53 +99,57 @@ namespace MDL.ServiceBus
                 return false;
 
             else if ((int)result.StatusCode >= 300)
-                throw new Exception(result.ToString());
+                throw new Exception($"RabbitMQ.Setup.HasVirtualHost({cfg}): {result}");
 
             return false;
         }
 
+        #endregion
 
+        #region "User Account"
 
         /// <summary>
         /// Create RabbitMQ User account
         /// </summary>
-        /// <param name="cfg">Rabbit MQ Config, (HostURL, ManagementApiPort, VirtualHost, ServiceAccountUsername, ServiceAccountPassword, Username)</param>
+        /// <param name="cfg">Rabbit MQ Config, (HostURL, ManagementApiPort, RabbitMQUsername, VirtualHost, ServiceAccountUsername, ServiceAccountPassword)</param>
         /// <param name="password">User account password</param>
         /// <param name="tags">User account tags (administrator or other)</param>
         public void UserAccount(RabbitMQConfiguration cfg, string password, string tags)
         {
-            // Check if already exists
-            if (HasUserAccount(cfg)) return;
-
             // Check and Create Connection
             CreateHttpClient(cfg);
 
             // Do Create
-            var url = $"api/users/{cfg.Username}";
-            var passwordHash = EncodePassword(password);
-            var content = new StringContent($"{{\"password_hash\":\"{passwordHash}\", \"description\":\"{cfg.VirtualHost} Dataset\", \"tags\":\"{tags}\"}}", Encoding.UTF8, "application/json");
+            var url = $"api/users/{cfg.RabbitMQUsername}";
+            var configModel = new UserAccountAdd()
+            {
+                PasswordHash = EncodePassword(password),
+                Description = $"{cfg.VirtualHost} Dataset",
+                Tags = tags
+            };
+            var content = new StringContent(configModel.ToString(), Encoding.UTF8, "application/json");
             var result = _httpClient.PutAsync(url, content).Result;
 
             _logger?.LogTrace("MDL.ServiceBus.RabbitMQ.Setup.UserAccount({0}) Result:{1}", cfg, result.StatusCode);
 
             if ((int)result.StatusCode >= 300)
-                throw new Exception(result.ToString());
+                throw new Exception($"RabbitMQ.Setup.UserAccount({cfg}): {result}");
         }
 
 
 
         /// <summary>
-        /// Checks to see if a RabbitMQ Exchange for a VirtualHost exists
+        /// Checks to see if a RabbitMQ User Account exists
         /// </summary>
-        /// <param name="cfg">Rabbit MQ Config, (HostURL, ManagementApiPort, VirtualHost, ExchangeName, ServiceAccountUsername, ServiceAccountPassword)</param>
+        /// <param name="cfg">Rabbit MQ Config, (HostURL, ManagementApiPort, RabbitMQUsername, ServiceAccountUsername, ServiceAccountPassword)</param>
         /// <returns>True if found, false if not or throws error if failed</returns>
-        private bool HasUserAccount(RabbitMQConfiguration cfg)
+        public bool HasUserAccount(RabbitMQConfiguration cfg)
         {
             // Check and Create Connection
             CreateHttpClient(cfg);
 
             // Do Get Lookup
-            var url = $"api/users/{cfg.Username}";
+            var url = $"api/users/{cfg.RabbitMQUsername}";
             var result = _httpClient.GetAsync(url).Result;
 
             _logger?.LogTrace("MDL.ServiceBus.RabbitMQ.Setup.HasUserAccount({0}) Result:{1}", cfg, result.StatusCode);
@@ -157,7 +162,7 @@ namespace MDL.ServiceBus
                 return false;
 
             else if ((int)result.StatusCode >= 300)
-                throw new Exception(result.ToString());
+                throw new Exception($"RabbitMQ.Setup.HasUserAccount({cfg}): {result}");
 
             return false;
         }
@@ -165,26 +170,63 @@ namespace MDL.ServiceBus
 
 
         /// <summary>
-        /// SetRabbitMqUserAccountVHostPermissions
+        /// Setup RabbitMQ VirtualHost Permissions for a User Account
         /// </summary>
-        /// <param name="cfg"></param>
-        public static void UserAccountVHostPermissions(RabbitMQConfiguration cfg, string configure, string write, string read)
+        /// <param name="cfg">Rabbit MQ Config, (HostURL, ManagementApiPort, VirtualHost, RabbitMQUsername, ServiceAccountUsername, ServiceAccountPassword)</param>
+        /// <param name="configure">Regex Permissions</param>
+        /// <param name="write">Regex Permissions</param>
+        /// <param name="read">Regex Permissions</param>
+        public void UserAccountVHostPermissions(RabbitMQConfiguration cfg, string configure = ".*", string write = ".*", string read = ".*")
         {
-            var credentials = new NetworkCredential() { UserName = cfg.ServiceAccountUsername, Password = cfg.ServiceAccountPassword };
-            using (var handler = new HttpClientHandler { Credentials = credentials })
-            using (var client = new HttpClient(handler))
+            // Check and Create Connection
+            CreateHttpClient(cfg);
+
+            var url = $"api/permissions/{cfg.VirtualHost}/{cfg.RabbitMQUsername}";
+            var configModel = new UserPermissionAdd()
             {
-                var url = $"http://{cfg.HostURL}:{cfg.ManagementApiPort}/api/permissions/{cfg.VirtualHost}/{cfg.Username}";
+                Username = cfg. RabbitMQUsername,
+                VHost = cfg.VirtualHost,
+                Configure = configure,
+                Write = write,
+                Read = read
+            };
+            var content = new StringContent(configModel.ToString(), Encoding.UTF8, "application/json");
+            var result = _httpClient.PutAsync(url, content).Result;
 
-                var content = new StringContent($"{{\"configure\":\"{configure}\",\"write\":\"{write}\",\"read\":\"{read}\"}}", Encoding.UTF8, "application/json");
-                var result = client.PutAsync(url, content).Result;
+            _logger?.LogTrace("MDL.ServiceBus.RabbitMQ.Setup.UserAccountVHostPermissions({0}) Result:{1}", cfg, result.StatusCode);
 
-                if ((int)result.StatusCode >= 300)
-                    throw new Exception(result.ToString());
-            }
+            if ((int)result.StatusCode >= 300)
+                throw new Exception($"RabbitMQ.Setup.UserAccountVHostPermissions({cfg}): {result}");
         }
 
 
+
+        /// <summary>
+        /// Setup RabbitMQ VirtualHost Permissions for the Service Account
+        /// </summary>
+        /// <param name="cfg">Rabbit MQ Config, (HostURL, ManagementApiPort, VirtualHost, ServiceAccountUsername, ServiceAccountPassword)</param>
+        public void ServiceAccountVHostPermissions(RabbitMQConfiguration cfg)
+        {
+            // Check and Create Connection
+            CreateHttpClient(cfg);
+
+            var url = $"api/permissions/{cfg.VirtualHost}/{cfg.ServiceAccountUsername}";
+            var configModel = new UserPermissionAdd()
+            {
+                Username = cfg.ServiceAccountUsername,
+                VHost = cfg.VirtualHost
+            };
+            var content = new StringContent(configModel.ToString(), Encoding.UTF8, "application/json");
+            var result = _httpClient.PutAsync(url, content).Result;
+
+            _logger?.LogTrace("MDL.ServiceBus.RabbitMQ.Setup.ServiceAccountVHostPermissions({0}) Result:{1}", cfg, result.StatusCode);
+
+            if ((int)result.StatusCode >= 300)
+                throw new Exception($"RabbitMQ.Setup.ServiceAccountVHostPermissions({cfg}): {result}");
+        }
+        #endregion
+
+        #region "Exchange"
 
         /// <summary>
         /// Setup RabbitMQ Exchange for a VirtualHost
@@ -192,21 +234,23 @@ namespace MDL.ServiceBus
         /// <param name="cfg">Rabbit MQ Config, (HostURL, ManagementApiPort, VirtualHost, ExchangeName, ServiceAccountUsername, ServiceAccountPassword)</param>
         public void Exchange(RabbitMQConfiguration cfg)
         {
-            // Check if already exists
-            if (HasExchange(cfg)) return;
-
             // Check and Create Connection
             CreateHttpClient(cfg);
 
             // Create using Put
             var url = $"api/exchanges/{cfg.VirtualHost}/{cfg.ExchangeName}";
-            var content = new StringContent($"{{\"type\":\"direct\",\"auto_delete\":false,\"durable\":false,\"internal\":false,\"arguments\":{{}}}}", Encoding.UTF8, "application/json");
+            var configModel = new ExchangeAdd()
+            {
+                VHost = cfg.VirtualHost,
+                ExchangeName = cfg.ExchangeName
+            };
+            var content = new StringContent(configModel.ToString(), Encoding.UTF8, "application/json");
             var result = _httpClient.PutAsync(url, content).Result;
 
             _logger?.LogTrace("MDL.ServiceBus.RabbitMQ.Setup.Exchange({0}) Result:{1}", cfg, result.StatusCode);
 
             if ((int)result.StatusCode >= 300)
-                throw new Exception(result.ToString());
+                throw new Exception($"RabbitMQ.Setup.Exchange({cfg}): {result}");
         }
 
 
@@ -216,7 +260,7 @@ namespace MDL.ServiceBus
         /// </summary>
         /// <param name="cfg">Rabbit MQ Config, (HostURL, ManagementApiPort, VirtualHost, ExchangeName, ServiceAccountUsername, ServiceAccountPassword)</param>
         /// <returns>True if found, false if not or throws error if failed</returns>
-        private bool HasExchange(RabbitMQConfiguration cfg)
+        public bool HasExchange(RabbitMQConfiguration cfg)
         {
             // Check and Create Connection
             CreateHttpClient(cfg);
@@ -235,10 +279,72 @@ namespace MDL.ServiceBus
                 return false;
 
             else if ((int)result.StatusCode >= 300)
-                throw new Exception(result.ToString());
+                throw new Exception($"RabbitMQ.Setup.HasExchange({cfg}): {result}");
 
             return false;
         }
+
+        #endregion
+
+        #region "Queue"
+
+        /// <summary>
+        /// Setup RabbitMQ Queue for a VirtualHost
+        /// </summary>
+        /// <param name="cfg">Rabbit MQ Config, (HostURL, ManagementApiPort, VirtualHost, QueueName, ServiceAccountUsername, ServiceAccountPassword)</param>
+        public void Queue(RabbitMQConfiguration cfg)
+        {
+            // Check and Create Connection
+            CreateHttpClient(cfg);
+
+            // Create using Put
+            var url = $"api/queues/{cfg.VirtualHost}/{cfg.QueueName}";
+            var configModel = new QueueAdd()
+            {
+                VHost = cfg.VirtualHost,
+                QueueName = cfg.QueueName
+            };
+            var content = new StringContent(configModel.ToString(), Encoding.UTF8, "application/json");
+            var result = _httpClient.PutAsync(url, content).Result;
+
+            _logger?.LogTrace("MDL.ServiceBus.RabbitMQ.Setup.Queue({0}) Result:{1}", cfg, result.StatusCode);
+
+            if ((int)result.StatusCode >= 300)
+                throw new Exception($"RabbitMQ.Setup.Queue({cfg}): {result}");
+        }
+
+
+
+        /// <summary>
+        /// Checks to see if a RabbitMQ Queue for a VirtualHost exists
+        /// </summary>
+        /// <param name="cfg">Rabbit MQ Config, (HostURL, ManagementApiPort, VirtualHost, QueueName, ServiceAccountUsername, ServiceAccountPassword)</param>
+        /// <returns>True if found, false if not or throws error if failed</returns>
+        public bool HasQueue(RabbitMQConfiguration cfg)
+        {
+            // Check and Create Connection
+            CreateHttpClient(cfg);
+
+            // Do Get Lookup
+            var url = $"api/queues/{cfg.VirtualHost}/{cfg.QueueName}";
+            var result = _httpClient.GetAsync(url).Result;
+
+            _logger?.LogTrace("MDL.ServiceBus.RabbitMQ.Setup.HasQueue({0}) Result:{1}", cfg, result.StatusCode);
+
+            // Check if Exchange is found
+            if ((int)result.StatusCode == 200)  // Found
+                return true;
+
+            else if ((int)result.StatusCode == 404) // Not Found
+                return false;
+
+            else if ((int)result.StatusCode >= 300)
+                throw new Exception($"RabbitMQ.Setup.HasQueue({cfg}): {result}");
+
+            return false;
+        }
+
+        #endregion
 
         #region "Helpers"
         private static string EncodePassword(string password)
