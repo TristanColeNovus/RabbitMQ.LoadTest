@@ -9,7 +9,7 @@ namespace MDL.ServiceBus
     /// <para>Will fail if user, queue or exchange is not setup</para>
     /// </summary>
     /// <remarks>Used by Novus (Dashboard)</remarks>
-    public class Subscribe
+    public class Subscribe : IDisposable
     {
         private ConnectionFactory Factory;
         private IConnection Connection;
@@ -68,6 +68,37 @@ namespace MDL.ServiceBus
         public void Receive(object sender, BasicDeliverEventArgs ea)
         {
             SubscriptionDelegate(ea);
+        }
+
+
+
+        /// <summary>
+        /// Checks the RabbitMQ Connection state
+        /// </summary>
+        /// <returns>True if open and usable, else false</returns>
+        public bool ConnectionState()
+        {
+            return Connection != null && Connection.IsOpen;
+        }
+
+        
+        
+        /// <summary>
+        /// Close all connections, and dispose of the objects
+        /// </summary>
+        public void Dispose()
+        {
+            // Close Connection if open
+            if (Connection != null && Connection.IsOpen)
+            {
+                Connection.Close();
+            }
+            
+            // Unbind Action target
+            SubscriptionDelegate = null;
+
+            // Dispose of the object
+            Connection.Dispose();
         }
     }
 }
