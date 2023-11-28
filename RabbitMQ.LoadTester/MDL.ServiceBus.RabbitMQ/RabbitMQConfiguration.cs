@@ -42,6 +42,7 @@ namespace MDL.ServiceBus
         /// <summary>
         /// Novus DataSet Name
         /// </summary>
+        /// <remarks>Forced to lowercase</remarks>
         public string DataSetName
         {
             get { return _dataSetName; }
@@ -56,6 +57,7 @@ namespace MDL.ServiceBus
         /// <summary>
         /// Novus Username
         /// </summary>
+        /// <remarks>Forced to lowercase</remarks>
         public string Username
         {
             get { return _username; }
@@ -66,6 +68,7 @@ namespace MDL.ServiceBus
 
         /// <summary>
         /// Virtual Host (dataset name)
+        /// <code>return DataSetName</code>
         /// </summary>
         /// <remarks>In lowercase</remarks>
         public string VirtualHost
@@ -75,6 +78,7 @@ namespace MDL.ServiceBus
 
         /// <summary>
         /// Novus Username (full path)
+        /// <code>return <see cref="PathHelper.GetUserName"/>(DataSetName, Username)</code>
         /// </summary>
         /// <remarks>In lowercase</remarks>
         public string RabbitMQUsername
@@ -84,6 +88,7 @@ namespace MDL.ServiceBus
 
         /// <summary>
         /// VHost Exchange Name (full path)
+        /// <code>return <see cref="PathHelper.GetExchangeName"/>(DataSetName)</code>
         /// </summary>
         /// <remarks>In lowercase</remarks>
         public string ExchangeName
@@ -93,6 +98,7 @@ namespace MDL.ServiceBus
 
         /// <summary>
         /// VHost Queue Name (full path)
+        /// <code>return <see cref="PathHelper.GetQueueName"/>(DataSetName, Username)</code>
         /// </summary>
         /// <remarks>In lowercase</remarks>
         public string QueueName
@@ -102,15 +108,29 @@ namespace MDL.ServiceBus
 
         #endregion
 
+        /// <summary>
+        /// Development Flag
+        /// </summary>
         public bool Development { get; set; }
 
+        /// <summary>
+        /// DevMessages Flag
+        /// </summary>
         public bool DevMessages { get; set; }
 
+        /// <summary>
+        /// Clone the Config to new unlinked Object
+        /// </summary>
+        /// <returns><see cref="RabbitMQConfiguration"/></returns>
         public object Clone()
         {
             return this.MemberwiseClone();
         }
 
+        /// <summary>
+        /// Outputs a Config Data for users
+        /// </summary>
+        /// <returns>{HostURL}:{AMQPPort} / {VirtualHost} ({Username})</returns>
         public override string ToString()
         {
             return $"{HostURL}:{AMQPPort} / {VirtualHost} ({Username})";
