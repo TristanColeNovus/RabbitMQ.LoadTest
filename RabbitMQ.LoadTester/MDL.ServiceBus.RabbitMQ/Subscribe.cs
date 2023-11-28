@@ -73,12 +73,12 @@ namespace MDL.ServiceBus
 
 
         /// <summary>
-        /// Checks the RabbitMQ Connection state
+        /// Checks the RabbitMQ Connection state & channel state
         /// </summary>
         /// <returns>True if open and usable, else false</returns>
         public bool ConnectionState()
         {
-            return Connection != null && Connection.IsOpen;
+            return Connection != null && Channel != null && Channel.IsOpen;
         }
 
         

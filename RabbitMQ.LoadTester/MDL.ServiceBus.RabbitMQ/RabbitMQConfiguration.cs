@@ -74,7 +74,7 @@ namespace MDL.ServiceBus
         }
 
         /// <summary>
-        /// Novus Username
+        /// Novus Username (full path)
         /// </summary>
         /// <remarks>In lowercase</remarks>
         public string RabbitMQUsername
