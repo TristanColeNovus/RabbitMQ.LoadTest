@@ -1,6 +1,7 @@
 ﻿using MDL.ServiceBus.ConfigModels;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -304,6 +305,9 @@ namespace MDL.ServiceBus
                 VHost = cfg.VirtualHost,
                 QueueName = cfg.QueueName
             };
+
+            Debug.WriteLine(configModel.ToString());
+
             var content = new StringContent(configModel.ToString(), Encoding.UTF8, "application/json");
             var result = _httpClient.PutAsync(url, content).Result;
 
