@@ -22,9 +22,13 @@ namespace MDL.ServiceBus.ConfigModels
         public bool Durable { get; set; } = false;
 
         [JsonProperty("auto_delete")]
-        public bool AutoDelete { get; set; } = true;
+        public bool AutoDelete { get; set; } = false;
 
         [JsonProperty("arguments")]
-        public string[] Arguments { get; set; } = new string[0];
+        public ArgumentOption Arguments { get; set; } = new ArgumentOption() { 
+            QueueType = "classic",
+            Expires = 600000,
+            MessageTTL = 300000
+        };
     }
 }
